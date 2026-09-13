@@ -364,10 +364,25 @@ function SearchScreen({ products, cart, updateQty, addToCart, setScreen }) {
     </div>
   );
 }
-
-function BasketScreen({ cart, products, updateQty, removeFromCart, setScreen }) {
+function BasketScreen({ cart, products, updateQty, removeFromCart, setScreen, details, markOrdered }) {
   const items = Object.entries(cart).map(([id, v]) => ({ product: products.find((p) => p.id === Number(id)), ...v }));
   const totalSaving = items.reduce((sum, it) => sum + savingFor(it.product, it.qty), 0);
+  const hasDetails = details && details.name && details.mobile && details.address;
+
+  const sendDirectly = () => {
+    if (!hasDetails) {
+      setScreen("details");
+      return;
+    }
+    const msg = buildWhatsAppMessage(cart, products, details);
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+    const win = window.open(url, "_blank");
+    if (win) {
+      markOrdered();
+      setScreen("success");
+    }
+  };
+
   if (items.length === 0) {
     return (
       <div className="pb-24 px-4">
@@ -703,9 +718,15 @@ export default function MH24BasketApp() {
   const showNav = ["home", "daily", "leafy", "seasonal", "piece", "category", "basket"].includes(screen);
 
   return (
-    <div className="max-w-md mx-auto min-h-screen relative" style={{ backgroundColor: CREAM, fontFamily: "'Noto Sans', 'Noto Sans Devanagari', sans-serif" }}>
-      {content}
-      {showNav && <BottomNav screen={screen === "category" ? category : screen} setScreen={setScreen} cartCount={cartCount} />}
-    </div>
-  );
+<div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-100 p-3 space-y-2 z-40">
+        <button onClick={() => setScreen("daily")} className="w-full py-2.5 rounded-full border border-emerald-200 text-emerald-800 font-semibold text-sm">खरेदी सुरू ठेवा / Continue Shopping</button>
+        {hasDetails ? (
+          <>
+            <button onClick={sendDirectly} className="w-full py-3.5 rounded-full text-white font-bold text-sm flex items-center justify-center gap-2 bg-[#25D366] active:scale-[0.98] transition">WhatsApp वर ऑर्डर पाठवा / Send Order on WhatsApp</button>
+            <button onClick={() => setScreen("details")} className="w-full text-center text-xs text-gray-400 underline pt-1">माहिती बदला / Edit Details</button>
+          </>
+        ) : (
+          <button onClick={() => setScreen("details")} className="w-full py-3 rounded-full text-white font-bold text-sm" style={{ backgroundColor: GREEN }}>ग्राहक माहिती भरा / Add Customer Details</button>
+        )}
+      </div>
                                              }
